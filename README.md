@@ -1,0 +1,1 @@
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/manulc50/ssc-brewery/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/manulc50/ssc-brewery/tree/main)
