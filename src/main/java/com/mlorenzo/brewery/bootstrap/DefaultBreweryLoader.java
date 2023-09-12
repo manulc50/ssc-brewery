@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.mlorenzo.brewery.domain.*;
 import com.mlorenzo.brewery.repositories.*;
-import com.mlorenzo.brewery.web.model.BeerStyleEnum;
+import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -38,10 +38,10 @@ public class DefaultBreweryLoader {
                 .customerName(TASTING_ROOM)
                 .apiKey(UUID.randomUUID())
                 .build();
-        customerRepository.save(tastingRoom);
+        Customer savedCustomer = customerRepository.save(tastingRoom);
         beerRepository.findAll().forEach(beer -> {
             beerOrderRepository.save(BeerOrder.builder()
-                    .customer(tastingRoom)
+                    .customer(savedCustomer)
                     .orderStatus(OrderStatusEnum.NEW)
                     .beerOrderLines(Set.of(BeerOrderLine.builder()
                             .beer(beer)

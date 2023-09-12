@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.mlorenzo.brewery.domain.Beer;
 import com.mlorenzo.brewery.domain.BeerInventory;
-import com.mlorenzo.brewery.web.model.BeerDto;
+import com.mlorenzo.brewery.web.models.BeerDto;
 
 public abstract class BeerMapperDecorator implements BeerMapper{
     private BeerMapper beerMapper;
@@ -19,11 +19,10 @@ public abstract class BeerMapperDecorator implements BeerMapper{
     @Override
     public BeerDto beerToBeerDto(Beer beer) {
         BeerDto dto = beerMapper.beerToBeerDto(beer);
-        if(beer.getBeerInventory() != null && beer.getBeerInventory().size() > 0) {
-            dto.setQuantityOnHand(beer.getBeerInventory()
+        if(beer.getBeerInventories() != null && beer.getBeerInventories().size() > 0) {
+            dto.setQuantityOnHand(beer.getBeerInventories()
                     .stream().map(BeerInventory::getQuantityOnHand)
                     .reduce(0, Integer::sum));
-
         }
         return dto;
     }

@@ -1,4 +1,4 @@
-package com.mlorenzo.brewery.web.model;
+package com.mlorenzo.brewery.web.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
@@ -18,18 +18,20 @@ public class BeerDto extends BaseItem {
     private BeerStyleEnum beerStyle;
     private String upc;
     private Integer quantityOnHand;
+    private Integer quantityToBrew;
 
     @JsonFormat(shape= JsonFormat.Shape.STRING)
     private BigDecimal price;
     
     @Builder
     public BeerDto(UUID id, Integer version, OffsetDateTime createdDate, OffsetDateTime lastModifiedDate, String beerName,
-                   BeerStyleEnum beerStyle, String upc, Integer quantityOnHand, BigDecimal price) {
+                   BeerStyleEnum beerStyle, String upc, Integer quantityOnHand, Integer quantityToBrew, BigDecimal price) {
         super(id, version, createdDate, lastModifiedDate);
         this.beerName = beerName;
         this.beerStyle = beerStyle;
         this.upc = upc;
         this.quantityOnHand = quantityOnHand;
+        this.quantityToBrew = quantityToBrew;
         this.price = price;
     }
 

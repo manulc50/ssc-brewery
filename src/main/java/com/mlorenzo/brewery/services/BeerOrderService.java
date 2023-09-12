@@ -2,8 +2,8 @@ package com.mlorenzo.brewery.services;
 
 import org.springframework.data.domain.Pageable;
 
-import com.mlorenzo.brewery.web.model.BeerOrderDto;
-import com.mlorenzo.brewery.web.model.BeerOrderPagedList;
+import com.mlorenzo.brewery.web.models.BeerOrderDto;
+import com.mlorenzo.brewery.web.models.BeerOrderPagedList;
 
 import java.util.UUID;
 

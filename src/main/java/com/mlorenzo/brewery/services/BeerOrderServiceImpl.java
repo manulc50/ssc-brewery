@@ -14,8 +14,8 @@ import com.mlorenzo.brewery.domain.OrderStatusEnum;
 import com.mlorenzo.brewery.repositories.BeerOrderRepository;
 import com.mlorenzo.brewery.repositories.CustomerRepository;
 import com.mlorenzo.brewery.web.mappers.BeerOrderMapper;
-import com.mlorenzo.brewery.web.model.BeerOrderDto;
-import com.mlorenzo.brewery.web.model.BeerOrderPagedList;
+import com.mlorenzo.brewery.web.models.BeerOrderDto;
+import com.mlorenzo.brewery.web.models.BeerOrderPagedList;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -21,10 +21,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		AuthenticationManager authManager = authenticationManager();
 		// Registramos nuestros filtros "RestHeaderAuthFilter" y "RestUrlAuthFilter", pasándoles previamente el manejador de autenticaciones, en la cadena de filtros de Spring Security antes del filtro "UsernamePasswordAuthenticationFilter"
-		http.addFilterBefore(restHeaderAuthFilter(authManager), UsernamePasswordAuthenticationFilter.class)
-			.addFilterBefore(restUrlAuthFilter(authManager), UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(restHeaderAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
+		//http.addFilterBefore(restUrlAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
 		http.authorizeRequests(authorize -> authorize
 				// No usar en Producción porque se trata de una base de datos apta únicamente para Desarrollo
 				.antMatchers("/h2-console/**").permitAll()

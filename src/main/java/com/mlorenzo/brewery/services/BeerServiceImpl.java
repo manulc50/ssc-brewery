@@ -12,9 +12,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.mlorenzo.brewery.domain.Beer;
 import com.mlorenzo.brewery.repositories.BeerRepository;
 import com.mlorenzo.brewery.web.mappers.BeerMapper;
-import com.mlorenzo.brewery.web.model.BeerDto;
-import com.mlorenzo.brewery.web.model.BeerPagedList;
-import com.mlorenzo.brewery.web.model.BeerStyleEnum;
+import com.mlorenzo.brewery.web.models.BeerDto;
+import com.mlorenzo.brewery.web.models.BeerPagedList;
+import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +90,8 @@ public class BeerServiceImpl implements BeerService {
             beer.setBeerStyle(beerDto.getBeerStyle());
             beer.setPrice(beerDto.getPrice());
             beer.setUpc(beerDto.getUpc());
+            beer.setMinOnHand(beerDto.getQuantityOnHand());
+            beer.setQuantityToBrew(beerDto.getQuantityToBrew());
             beerRepository.save(beer);
         }, () -> {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not Found. UUID: " + beerId);

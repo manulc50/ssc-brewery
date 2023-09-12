@@ -1,4 +1,4 @@
-package com.mlorenzo.brewery.web.model;
+package com.mlorenzo.brewery.web.models;
 
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;

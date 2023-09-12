@@ -1,4 +1,4 @@
-package com.mlorenzo.brewery.web.model;
+package com.mlorenzo.brewery.web.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

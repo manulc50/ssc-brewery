@@ -8,7 +8,7 @@
     <form th:object="${beer}" th:action="@{/beers}" class="form-horizontal" id="add-beer-form" method="post">
 	    <div class="form-group has-feedback">
 	        <input th:replace="~{fragments/inputField :: input ('Beer Name', 'beerName', 'text')}" />
-	        <input th:replace="~{fragments/selectField :: select ('Style', 'beerStyle', ${T(com.mlorenzo.brewery.web.model.BeerStyleEnum).values()})}" />
+	        <input th:replace="~{fragments/selectField :: select ('Style', 'beerStyle', ${T(com.mlorenzo.brewery.web.models.BeerStyleEnum).values()})}" />
 	        <input th:replace="~{fragments/inputField :: input ('UPC', 'upc', 'number')}" />
 	        <input th:replace="~{fragments/inputField :: input ('Min Qty on Hand', 'minOnHand', 'number')}" />
 	        <input th:replace="~{fragments/inputField :: input ('Qty to Brew', 'quantityToBrew', 'number')}" />

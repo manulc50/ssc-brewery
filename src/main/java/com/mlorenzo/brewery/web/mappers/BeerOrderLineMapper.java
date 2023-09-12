@@ -4,7 +4,7 @@ import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 
 import com.mlorenzo.brewery.domain.BeerOrderLine;
-import com.mlorenzo.brewery.web.model.BeerOrderLineDto;
+import com.mlorenzo.brewery.web.models.BeerOrderLineDto;
 
 @Mapper(uses = {DateMapper.class})
 @DecoratedWith(BeerOrderLineMapperDecorator.class)

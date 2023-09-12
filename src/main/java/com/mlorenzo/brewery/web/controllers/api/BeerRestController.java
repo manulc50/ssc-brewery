@@ -9,9 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.mlorenzo.brewery.services.BeerService;
-import com.mlorenzo.brewery.web.model.BeerDto;
-import com.mlorenzo.brewery.web.model.BeerPagedList;
-import com.mlorenzo.brewery.web.model.BeerStyleEnum;
+import com.mlorenzo.brewery.web.models.BeerDto;
+import com.mlorenzo.brewery.web.models.BeerPagedList;
+import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -55,7 +55,7 @@ public class BeerRestController {
         return new ResponseEntity<>(beerService.findBeerById(beerId, showInventoryOnHand), HttpStatus.OK);
     }
 
-    @GetMapping(path = {"beerUpc/{upc}"}, produces = { "application/json" })
+    @GetMapping(path = {"upc/{upc}"}, produces = { "application/json" })
     public ResponseEntity<BeerDto> getBeerByUpc(@PathVariable("upc") String upc){
         return new ResponseEntity<>(beerService.findBeerByUpc(upc), HttpStatus.OK);
     }
@@ -65,7 +65,7 @@ public class BeerRestController {
         BeerDto savedDto = beerService.saveBeer(beerDto);
         HttpHeaders httpHeaders = new HttpHeaders();
         //todo hostname for uri
-        httpHeaders.add("Location", "/api/v1/beer_service/" + savedDto.getId().toString());
+        httpHeaders.add("Location", "/api/v1/beers/" + savedDto.getId().toString());
         return new ResponseEntity<>(httpHeaders, HttpStatus.CREATED);
     }
 

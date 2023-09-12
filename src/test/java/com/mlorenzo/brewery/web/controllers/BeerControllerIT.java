@@ -38,7 +38,7 @@ public class BeerControllerIT {
     }
 	
 	@Test
-    void findBeersWithHttpBasic() throws Exception {
+    void findBeersWithAnonymous() throws Exception {
         mockMvc.perform(get("/beers/find")
         		// Se comenta porque, ahora, el endpoint de este test es público. Para ello, podemos usar el método estático "anonymous" o no poner nada
         		//.with(httpBasic("spring", "admin"))
