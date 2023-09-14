@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
@@ -25,7 +26,7 @@ public class Customer extends BaseEntity {
     @Column(length = 36, columnDefinition = "varchar")
     private UUID apiKey;
 
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<BeerOrder> beerOrders;
     
     @Builder

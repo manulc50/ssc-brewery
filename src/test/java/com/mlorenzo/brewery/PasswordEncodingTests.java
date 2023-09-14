@@ -5,10 +5,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.LdapShaPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.StandardPasswordEncoder;
 import org.springframework.util.DigestUtils;
 
 // Deshabilitamos los tests de esta clase porque realmente no realizan ninguna comprobación
@@ -33,7 +30,7 @@ public class PasswordEncodingTests {
 	void testNoOp() {
 		System.out.println("--- NoOp Password Encoder  ---");
 		// Deprecated porque no se recomienda su uso actualmente
-		PasswordEncoder noOp = NoOpPasswordEncoder.getInstance();
+		PasswordEncoder noOp = org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
 		System.out.println("Codificación para \"password\": " + noOp.encode(PASSWORD));
 		System.out.println("Codificación para \"admin\": " + noOp.encode("admin"));
 		System.out.println("Codificación para \"tiger\": " + noOp.encode("tiger"));
@@ -44,7 +41,7 @@ public class PasswordEncodingTests {
 	void testLdap() {
 		System.out.println("--- LDAP Password Encoder ---");
 		// Deprecated porque no se recomienda su uso actualmente
-		PasswordEncoder ldap = new LdapShaPasswordEncoder();
+		PasswordEncoder ldap = new org.springframework.security.crypto.password.LdapShaPasswordEncoder();
 		System.out.println("Codificación para \"password\": " + ldap.encode(PASSWORD));
 		System.out.println("Segunda codificación para \"password\": " + ldap.encode(PASSWORD));
 		System.out.println("Codificación para \"tiger\": " + ldap.encode("tiger"));
@@ -58,7 +55,7 @@ public class PasswordEncodingTests {
 	void testSha256() {
 		System.out.println("--- SHA-256 Password Encoder ---");
 		// Deprecated porque no se recomienda su uso actualmente
-		PasswordEncoder sha256 = new StandardPasswordEncoder();
+		PasswordEncoder sha256 = new org.springframework.security.crypto.password.StandardPasswordEncoder();
 		System.out.println("Codificación para \"password\": " + sha256.encode(PASSWORD));
 		System.out.println("Segunda codificación para \"password\": " + sha256.encode(PASSWORD));
 		System.out.println("Codificación para \"tiger\": " + sha256.encode("tiger"));

@@ -22,7 +22,7 @@
         <td th:text="${beer.price}"/>
         <td th:text="${beer.minOnHand}"/>
         <td th:text="${beer.quantityToBrew}"/>
-        <td><span th:each="beerInventory : ${beer.beerInventory}" th:text="${beerInventory.quantityOnHand}"></span></td>
+        <td><span th:each="beerInventory : ${beer.beerInventories}" th:text="${beerInventory.quantityOnHand}"/></span></td>
     </tr>
     </tbody>
 </table>

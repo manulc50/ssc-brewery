@@ -1,6 +1,9 @@
 package com.mlorenzo.brewery.web.controllers;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,6 +38,8 @@ public class CustomerController {
         return "customers/findCustomers";
     }
 
+    // Esta anotación es más antigua que las anotaciones de seguridad @PreAuthorize y @PostAuthorize y tiene menos funcionalidades que éstas
+    @Secured({"ROLE_ADMIN", "ROLE_CUSTOMER"})
     @GetMapping
     public String processFindFormReturnMany(Customer customer, BindingResult result, Model model){
         // find customers by name
@@ -72,15 +77,16 @@ public class CustomerController {
     }
 
     @GetMapping("/{customerId}/edit")
-   public String initUpdateCustomerForm(@PathVariable UUID customerId, Model model) {
+    public String initUpdateCustomerForm(@PathVariable UUID customerId, Model model) {
     	Optional<Customer> optionalCustomer = customerRepository.findById(customerId);
        if(optionalCustomer.isPresent())
           model.addAttribute("customer", optionalCustomer.get());
        return "customers/createOrUpdateCustomer";
    }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public String processUpdationForm(@Valid Customer customer, BindingResult result, SessionStatus sessionStatus) {
+    public String processCreationOrUpdationForm(@Valid Customer customer, BindingResult result, SessionStatus sessionStatus) {
     	if (result.hasErrors()) 
             return "beers/createOrUpdateCustomer";
         else {

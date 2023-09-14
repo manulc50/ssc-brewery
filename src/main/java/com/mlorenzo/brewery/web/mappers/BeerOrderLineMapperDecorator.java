@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.mlorenzo.brewery.domain.BeerOrderLine;
 import com.mlorenzo.brewery.repositories.BeerRepository;
-import com.mlorenzo.brewery.web.model.BeerOrderLineDto;
+import com.mlorenzo.brewery.web.models.BeerOrderLineDto;
 
 public abstract class BeerOrderLineMapperDecorator implements BeerOrderLineMapper {
     private BeerRepository beerRepository;

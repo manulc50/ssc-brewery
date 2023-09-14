@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mlorenzo.brewery.domain.*;
 import com.mlorenzo.brewery.repositories.*;
-import com.mlorenzo.brewery.web.model.BeerStyleEnum;
+import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -30,34 +31,23 @@ public class DefaultBreweryLoader {
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         loadBreweryData();
+        loadBeerData();
         loadCustomerData();
     }
-
-    private void loadCustomerData() {
-        Customer tastingRoom = Customer.builder()
-                .customerName(TASTING_ROOM)
-                .apiKey(UUID.randomUUID())
-                .build();
-        customerRepository.save(tastingRoom);
-        beerRepository.findAll().forEach(beer -> {
-            beerOrderRepository.save(BeerOrder.builder()
-                    .customer(tastingRoom)
-                    .orderStatus(OrderStatusEnum.NEW)
-                    .beerOrderLines(Set.of(BeerOrderLine.builder()
-                            .beer(beer)
-                            .orderQuantity(2)
-                            .build()))
-                    .build());
-        });
-    }
-
+    
     private void loadBreweryData() {
         if (breweryRepository.count() == 0) {
             breweryRepository.save(Brewery
                     .builder()
                     .breweryName("Cage Brewing")
                     .build());
-            Beer mangoBobs = Beer.builder()
+        }
+    }
+    
+    @Transactional
+    private void loadBeerData() {
+    	if(beerRepository.count() == 0) {
+    		Beer mangoBobs = Beer.builder()
                     .beerName("Mango Bobs")
                     .beerStyle(BeerStyleEnum.IPA)
                     .minOnHand(12)
@@ -96,6 +86,31 @@ public class DefaultBreweryLoader {
                     .beer(savedPinball)
                     .quantityOnHand(500)
                     .build());
-        }
+    	}
+    }
+
+    @Transactional
+    private void loadCustomerData() {
+    	if(customerRepository.count() == 0) {
+	        Customer tastingRoom = Customer.builder()
+	                .customerName(TASTING_ROOM)
+	                .apiKey(UUID.randomUUID())
+	                .build();
+	        Customer savedCustomer = customerRepository.save(tastingRoom);
+	        beerRepository.findAll().forEach(beer -> {
+	        	BeerOrder beerOrder = BeerOrder.builder()
+	                    .customer(savedCustomer)
+	                    .orderStatus(OrderStatusEnum.NEW)
+	                    .build();
+	        	Set<BeerOrderLine> beerOrderLines = Set.of(BeerOrderLine.builder()
+	        			.beer(beer)
+	        			.beerOrder(beerOrder)
+	                    .orderQuantity(2)
+	                    .quantityAllocated(7)
+	                    .build());
+	        	beerOrder.setBeerOrderLines(beerOrderLines);
+	        	beerOrderRepository.save(beerOrder);
+	        });
+    	}
     }
 }

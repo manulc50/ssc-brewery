@@ -1,50 +1,27 @@
 package com.mlorenzo.brewery.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.mlorenzo.brewery.security.RestHeaderAuthFilter;
 import com.mlorenzo.brewery.security.RestUrlAuthFilter;
 import com.mlorenzo.brewery.security.SfgPasswordEncoderFactories;
 
-// Esta anotación ya incluye la anotación @Configuration
-@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-	
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		AuthenticationManager authManager = authenticationManager();
-		// Registramos nuestros filtros "RestHeaderAuthFilter" y "RestUrlAuthFilter", pasándoles previamente el manejador de autenticaciones, en la cadena de filtros de Spring Security antes del filtro "UsernamePasswordAuthenticationFilter"
-		http.addFilterBefore(restHeaderAuthFilter(authManager), UsernamePasswordAuthenticationFilter.class)
-			.addFilterBefore(restUrlAuthFilter(authManager), UsernamePasswordAuthenticationFilter.class);
-		http.authorizeRequests(authorize -> authorize
-				// No usar en Producción porque se trata de una base de datos apta únicamente para Desarrollo
-				.antMatchers("/h2-console/**").permitAll()
-				.antMatchers("/", "/webjars/**", "/resources/**").permitAll()
-				// Nota: Esta ruta entra en conflicto con las rutas de la expresión de abajo "/beers/*".
-				// Por lo tanto, la ponemos aquí encima para que tenga preferencia.
-				.antMatchers("/beers/new").authenticated()
-				.antMatchers("/beers/find", "/beers**", "/beers/*").permitAll()
-				.antMatchers(HttpMethod.GET, "/api/v1/beers/**").permitAll()
-				.anyRequest().authenticated())
-			.formLogin()
-			.and()
-			.httpBasic()
-			.and()
-			// Para no aplicar protección CSRF a las rutas, o endpoints, correspondientes a la API REST y a la consola H2
-			.csrf().ignoringAntMatchers("/api/**", "/h2-console/**");
-		// Por defecto, Spring Security no permite, o bloquea, la carga, o el renderizado, de elementos tipo iFrame.
-		// La consola de la base de datos H2 utiliza este tipo de elementos para su renderizado y visualización. Por lo tanto, con esta configuración, permitimos que Spring Security no los bloquee.
-		http.headers().frameOptions().sameOrigin();
-	}
+//securedEnabled = true -> Habilita el uso de la anotación de seguridad @Secured(más antigua y menos potente que las anotaciones de abajo @PreAuthorize y @PostAuthorize)
+//prePostEnabled = true -> Habilita el uso de las anotaciones de seguridad @PreAuthorize y @PostAuthorize
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+@Configuration
+public class SecurityConfig {
 	
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -59,60 +36,81 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		// Usamos nuestra propia factoría de codificadores de contraseñas
 		return SfgPasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
-
-	// Primera forma para configurar usuarios de Spring Security en memoria
+	
+	// Se comenta porque en nuestro caso es opcional, es decir, si sólo tenemos una única implementación de la interfaz "UserDetailsService" de Spring Security, no es necesario
+	// indicarla en el método de configuración "configure". Sin embargo, si tenemos más de una implementación, entonces sí es necesario indicar la implementación
+	// que queremos utilizar
+	/*@Autowired
+	UserDetailsService jpaUserDetailsService;
+	
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.inMemoryAuthentication()
-			.withUser("spring")
-			.password("{bcrypt}$2a$10$QpJ6K30L99D9HT10RV7rYexggaJOR.hUVKrA7//OVuBhvXdBjzy1i") // BCrypt
-			.roles("ADMIN")
-			.and()
-			.withUser("user")
-			//.password("password") // NoOp
-			//.password("{SSHA}BwqPVocp6l37CCS+NP2CkgDh1AOiIKe0XFYpgw==") // LDAP
-			.password("{sha256}80b2aaf0f399c74e5552868ce22400edadc8ee1db4071dd1a9b05a7c0594b57cd0108bc33cb6e37a") // SHA-256
-			//.password("$2a$10$dgyBK9eqHDQyA4UttnvhKeRxip6niLwRijvZ43rc2ba8OBixJ3Bea") // BCrypt
-			.roles("USER");
-		auth.inMemoryAuthentication()
-			.withUser("scott")
-			.password("{bcrypt10}$2a$10$ULhSPDT3ep4CdB/TU46FzOVpfSicDUhjIxTzFP6Rdp49OyuMqPx7e") // BCrypt-10
-			.roles("CUSTOMER");
-	}
-	
-	// Segunda forma para configurar usuarios de Spring Security en memoria
-	/*@Bean
-	@Override
-	protected UserDetailsService userDetailsService() {
-		UserDetails admin = User
-				.withUsername("spring")
-				.password("{noop}admin")
-				.roles("ADMIN")
-				.build();
-		UserDetails user = User
-				.withUsername("user")
-				.password("{noop}password")
-				.roles("USER")
-				.build();
-		return new InMemoryUserDetailsManager(admin, user);
+		auth.userDetailsService(jpaUserDetailsService).passwordEncoder(passwordEncoder());
 	}*/
 	
-	// Método para crear una instancia de nuestro filtro "RestHeaderAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-	private RestHeaderAuthFilter restHeaderAuthFilter(AuthenticationManager authenticationManager) {
-		// Nuestro filtro "RestHeaderAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-		RestHeaderAuthFilter filter = new RestHeaderAuthFilter(new AntPathRequestMatcher("/api/**"));
-		// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-		filter.setAuthenticationManager(authenticationManager);
-		return filter;
+	// Nota: Como en esta aplicación tenemos una parte que es una API REST y otra parte que es MVC, creamos 2 filtros de seguridad para configurar cada parte por separado
+	
+	@Order(1)
+	// Esta anotación ya incluye la anotación @Configuration
+	@EnableWebSecurity
+	static class ApiSecurity extends WebSecurityConfigurerAdapter {
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			// Registramos nuestros filtros "RestHeaderAuthFilter" y "RestUrlAuthFilter", pasándoles previamente el manejador de autenticaciones, en la cadena de filtros de Spring Security antes del filtro "UsernamePasswordAuthenticationFilter"
+		    //http.addFilterBefore(restHeaderAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
+			//http.addFilterBefore(restUrlAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
+			http.antMatcher("/api/**")
+				.authorizeRequests(authorize -> authorize
+					.antMatchers(HttpMethod.DELETE, "/api/v1/beers/*").hasRole("ADMIN")
+					.antMatchers("/api/v1/breweries").hasAnyRole("CUSTOMER", "ADMIN")
+					.anyRequest().authenticated())
+				.httpBasic()
+				.and()
+				.csrf().disable()
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		}
+		
+		// Método para crear una instancia de nuestro filtro "RestHeaderAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
+		private RestHeaderAuthFilter restHeaderAuthFilter(AuthenticationManager authenticationManager) {
+			// Nuestro filtro "RestHeaderAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
+			RestHeaderAuthFilter filter = new RestHeaderAuthFilter(new AntPathRequestMatcher("/api/**"));
+			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
+			filter.setAuthenticationManager(authenticationManager);
+			return filter;
+		}
+		
+		// Método para crear una instancia de nuestro filtro "RestUrlAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
+		private RestUrlAuthFilter restUrlAuthFilter(AuthenticationManager authenticationManager) {
+			// Nuestro filtro "RestUrlAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
+			RestUrlAuthFilter filter = new RestUrlAuthFilter(new AntPathRequestMatcher("/api/**"));
+			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
+			filter.setAuthenticationManager(authenticationManager);
+			return filter;
+		}
 	}
 	
-	// Método para crear una instancia de nuestro filtro "RestUrlAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-	private RestUrlAuthFilter restUrlAuthFilter(AuthenticationManager authenticationManager) {
-		// Nuestro filtro "RestUrlAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-		RestUrlAuthFilter filter = new RestUrlAuthFilter(new AntPathRequestMatcher("/api/**"));
-		// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-		filter.setAuthenticationManager(authenticationManager);
-		return filter;
+	@Order(2)
+	// Esta anotación ya incluye la anotación @Configuration
+	@EnableWebSecurity
+	static class MvcSecurity extends WebSecurityConfigurerAdapter {
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http.authorizeRequests()
+					// No usar en Producción porque se trata de una base de datos apta únicamente para Desarrollo
+					.antMatchers("/h2-console/**").permitAll()
+					.antMatchers("/", "/webjars/**", "/resources/**").permitAll()
+					.antMatchers("/breweries/**", "/breweries*").hasAnyRole("CUSTOMER", "ADMIN")
+					.anyRequest().authenticated()
+				.and().formLogin()
+				.and().httpBasic()
+				// Para no aplicar protección CSRF a las rutas, o endpoints, correspondientes a la consola H2
+				.and().csrf().ignoringAntMatchers("/h2-console/**");
+			// Por defecto, Spring Security no permite, o bloquea, la carga, o el renderizado, de elementos tipo iFrame.
+			// La consola de la base de datos H2 utiliza este tipo de elementos para su renderizado y visualización. Por lo tanto, con esta configuración, permitimos que Spring Security no los bloquee.
+			http.headers().frameOptions().sameOrigin();
+		}
+		
 	}
-	
 }

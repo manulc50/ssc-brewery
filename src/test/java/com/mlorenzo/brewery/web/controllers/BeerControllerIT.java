@@ -1,75 +1,177 @@
 package com.mlorenzo.brewery.web.controllers;
 
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.mlorenzo.brewery.domain.Beer;
 import com.mlorenzo.brewery.repositories.BeerRepository;
 
-@WebMvcTest(controllers = BeerController.class)
+// No podemos usar la anotación @WebMvcTest para la ejecución de los tests de esta clase porque los usuarios se obtienen de la base de datos y,
+// por lo tanto, es necesario levantar en el contexto de Spring, además del controlador, más partes de la aplicación.
+@SpringBootTest
+@AutoConfigureMockMvc
 public class BeerControllerIT {
 	
-	@MockBean
+	@Autowired
 	BeerRepository beerRepository;
-
+	
 	@Autowired
 	MockMvc mockMvc;
 	
-	// Se comenta porque, ahora, el endpoint de este test es público
-	// Da igual el nombre de usuario que pongamos en esta anotación porque siempre simula un usuario autenticado correctamente en la aplicación
-	//@WithMockUser("spring")
 	@Test
-    void findBeers() throws Exception {
-        mockMvc.perform(get("/beers/find"))
-        	.andExpect(status().isOk())
-        	.andExpect(view().name("beers/findBeers"))
-        	.andExpect(model().attributeExists("beer"));
-        verifyNoInteractions(beerRepository);
+    void initCreationFormTest() throws Exception {
+		mockMvc.perform(get("/beers/new").with(httpBasic("user", "password")))
+        .andExpect(status().isOk())
+        .andExpect(view().name("beers/createOrUpdateBeer"))
+        .andExpect(model().attributeExists("beer"));
     }
 	
-	@Test
-    void findBeersWithHttpBasic() throws Exception {
-        mockMvc.perform(get("/beers/find")
-        		// Se comenta porque, ahora, el endpoint de este test es público. Para ello, podemos usar el método estático "anonymous" o no poner nada
-        		//.with(httpBasic("spring", "admin"))
-        		.with(anonymous()))
-        	.andExpect(status().isOk())
-            .andExpect(view().name("beers/findBeers"))
-            .andExpect(model().attributeExists("beer"));
-        verifyNoInteractions(beerRepository);
+	@DisplayName("Init New Form")
+    @Nested
+    class InitNewForm {
+		
+		@ParameterizedTest(name = "#{index} with [{arguments}]")
+        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamAllUsers")
+        void initCreationFormWithHttpBasic(String user, String pwd) throws Exception {
+            mockMvc.perform(get("/beers/new").with(httpBasic(user, pwd)))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("beers/createOrUpdateBeer"))
+                    .andExpect(model().attributeExists("beer"));
+        }
+
+        @Test
+        void initCreationFormWithNoCreds() throws Exception {
+            mockMvc.perform(get("/beers/new"))
+                    .andExpect(status().isUnauthorized());
+        }
 	}
 	
-	@Test
-    void initCreationForm() throws Exception {
-        mockMvc.perform(get("/beers/new").with(httpBasic("user", "password")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("beers/createOrUpdateBeer"))
-                .andExpect(model().attributeExists("beer"));
+	@DisplayName("Init Find Beer Form")
+    @Nested
+    class FindForm{
+		
+        @ParameterizedTest(name = "#{index} with [{arguments}]")
+        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamAllUsers")
+        void findBeersFormWithHttpBasic(String user, String pwd) throws Exception{
+            mockMvc.perform(get("/beers/find").with(httpBasic(user, pwd)))
+            		.andExpect(status().isOk())
+                    .andExpect(view().name("beers/findBeers"))
+                    .andExpect(model().attributeExists("beer"));
+        }
+
+        @Test
+        void findBeersWithAnonymous() throws Exception{
+            mockMvc.perform(get("/beers/find").with(anonymous()))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 	
-	@Test
-    void initCreationFormWithScott() throws Exception {
-        mockMvc.perform(get("/beers/new").with(httpBasic("scott", "tiger")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("beers/createOrUpdateBeer"))
-                .andExpect(model().attributeExists("beer"));
+	@DisplayName("Process Find Beer Form")
+    @Nested
+    class ProcessFindForm {
+		
+        @Test
+        void findBeerFormWithNoCreds() throws Exception {
+            mockMvc.perform(get("/beers").param("beerName", ""))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @ParameterizedTest(name = "#{index} with [{arguments}]")
+        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamAllUsers")
+        void findBeerFormWithHttpBasic(String user, String pwd) throws Exception {
+            mockMvc.perform(get("/beers").param("beerName", "").with(httpBasic(user, pwd)))
+                    .andExpect(status().isOk());
+        }
     }
-	
-	@Test
-    void initCreationFormWithSpring() throws Exception {
-        mockMvc.perform(get("/beers/new").with(httpBasic("spring", "admin")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("beers/createOrUpdateBeer"))
-                .andExpect(model().attributeExists("beer"));
+
+    @DisplayName("Get Beer By Id")
+    @Nested
+    class GetByID {
+    	
+        @ParameterizedTest(name = "#{index} with [{arguments}]")
+        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamAllUsers")
+        void getBeerByIdWithHttpBasic(String user, String pwd) throws Exception {
+        	Beer beer = beerRepository.findAll().get(0);
+            mockMvc.perform(get("/beers/" + beer.getId()).with(httpBasic(user, pwd)))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("beers/beerDetails"))
+                    .andExpect(model().attributeExists("beer"));
+        }
+
+        @Test
+        void getBeerByIdNoCreds() throws Exception {
+            mockMvc.perform(get("/beers/493410b3-dd0b-4b78-97bf-289f50f6e74f"))
+                    .andExpect(status().isUnauthorized());
+        }
     }
+    
+    @DisplayName("Add Beers")
+    @Nested
+    class AddCustomers {
+		
+        @Test
+        void processCreationFormWithHttpBasicAndCsrf() throws Exception {
+            mockMvc.perform(post("/beers").with(httpBasic("spring", "admin")).with(csrf())
+                    .param("beerName", "Foo Beer"))
+            	.andExpect(status().is3xxRedirection());
+        }
+		
+		@Test
+	    void processCreationFormWithHttpBasicAndNoCsrf() throws Exception {
+	        mockMvc.perform(post("/beers").with(httpBasic("spring", "admin"))
+	                .param("beerName", "Foo Beer"))
+	        	.andExpect(status().isForbidden());
+	    }
+
+        @ParameterizedTest(name = "#{index} with [{arguments}]")
+        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamNotAdmin")
+        void processCreationFormWithHttpBasicNoRoleAdmin(String user, String pwd) throws Exception {
+            mockMvc.perform(post("/beers").with(httpBasic(user, pwd))
+                    .param("beerName", "Foo Beer"))
+            	.andExpect(status().isForbidden());
+        }
+
+        @Test
+        void processCreationFormWithCsrfAndNoCreds() throws Exception {
+            mockMvc.perform(post("/beers").with(csrf())
+                    .param("beerName", "Foo Beer"))
+            	.andExpect(status().isUnauthorized());
+        }
+	}
+    
+    static Stream<Arguments> getStreamAdminCustomer() {
+        return Stream.of(Arguments.of("spring" , "admin"),
+                Arguments.of("scott", "tiger"));
+    }
+    
+    static Stream<Arguments> getStreamAllUsers() {
+        return Stream.of(Arguments.of("spring" , "admin"),
+                Arguments.of("scott", "tiger"),
+                Arguments.of("user", "password"));
+    }
+
+    static Stream<Arguments> getStreamNotAdmin() {
+        return Stream.of(Arguments.of("scott", "tiger"),
+                Arguments.of("user", "password"));
+    }
+
 }

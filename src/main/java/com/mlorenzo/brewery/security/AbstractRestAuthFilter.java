@@ -9,6 +9,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,7 +17,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,6 +35,18 @@ public abstract class AbstractRestAuthFilter extends AbstractAuthenticationProce
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
+		
+		if (!requiresAuthentication(request, response)) {
+			chain.doFilter(request, response);
+			return;
+		}
+		
+		// Si las peticiones http son de tipo Get, tampoco requieren autenticación
+		if(request.getMethod().equals(HttpMethod.GET.name())) {
+			chain.doFilter(request, response);
+			return;
+		}
+		
 		if (log.isDebugEnabled())
 			log.debug("Request is to process authentication");
 		try {
@@ -62,20 +74,11 @@ public abstract class AbstractRestAuthFilter extends AbstractAuthenticationProce
 		// Obtenemos el username y el password de la petición http
 		String username = getUsername(request);
 		String password = getPassword(request);
-		// Si por algún motivo el username o el passowrd no vienen, los inicializamos a una cadena de texto vacía
-		if(username == null)
-			username = "";
-		if(password == null)
-			password = "";
 		log.debug("Authenticating User: " + username);
 		// Creamos un token de autenticación, generado y proporcionado por Spring Security, a partir del username y el password obtenidos previamente
 		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
-		// Si el username no está vacío, devolvemos el manejador de autenticaciones que realizará el proceso de autenticación teniendo en cuenta el token generado en el punto anterior
-	    if(!StringUtils.isEmpty(username))
-	    	return this.getAuthenticationManager().authenticate(token);
-	    // En caso contrario, devolvemos null para no realizar el proceso de autenticación
-	    else
-	    	return null;
+		// Devolvemos el manejador de autenticaciones que realizará el proceso de autenticación teniendo en cuenta el token generado en el punto anterior
+	    return this.getAuthenticationManager().authenticate(token);
 	}
 	
 	// Sobrescribimos este método de la clase abstracta AbstractAuthenticationProcessingFilter para indicar nuestra implementación personalizada sobre las autenticaciones con éxito o satisfactorias
@@ -87,7 +90,7 @@ public abstract class AbstractRestAuthFilter extends AbstractAuthenticationProce
 			log.debug("Authentication success. Updating SecurityContextHolder to contain: " + authResult);
 		// Establecemos el resultado de la autenticación(autenticación con éxtio) dentro del contexto de seguridad
 		SecurityContextHolder.getContext().setAuthentication(authResult);
-;
+		chain.doFilter(request, response);
 	}
 	
 	// Sobrescribimos este método de la clase abstracta AbstractAuthenticationProcessingFilter para indicar nuestra implementación personalizada sobre las autenticaciones fallidas

@@ -2,9 +2,9 @@ package com.mlorenzo.brewery.services;
 
 import org.springframework.data.domain.PageRequest;
 
-import com.mlorenzo.brewery.web.model.BeerDto;
-import com.mlorenzo.brewery.web.model.BeerPagedList;
-import com.mlorenzo.brewery.web.model.BeerStyleEnum;
+import com.mlorenzo.brewery.web.models.BeerDto;
+import com.mlorenzo.brewery.web.models.BeerPagedList;
+import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import java.util.UUID;
 
