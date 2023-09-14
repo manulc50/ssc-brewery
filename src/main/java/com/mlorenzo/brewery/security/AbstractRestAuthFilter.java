@@ -35,15 +35,18 @@ public abstract class AbstractRestAuthFilter extends AbstractAuthenticationProce
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
+		
 		if (!requiresAuthentication(request, response)) {
 			chain.doFilter(request, response);
 			return;
 		}
+		
 		// Si las peticiones http son de tipo Get, tampoco requieren autenticación
 		if(request.getMethod().equals(HttpMethod.GET.name())) {
 			chain.doFilter(request, response);
 			return;
 		}
+		
 		if (log.isDebugEnabled())
 			log.debug("Request is to process authentication");
 		try {

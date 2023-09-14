@@ -21,7 +21,7 @@ public class BeerOrderLine extends BaseEntity {
 	
     @ManyToOne
     private BeerOrder beerOrder;
-
+    
     @ManyToOne
     private Beer beer;
 

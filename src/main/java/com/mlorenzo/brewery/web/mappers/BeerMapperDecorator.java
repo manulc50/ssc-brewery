@@ -23,6 +23,7 @@ public abstract class BeerMapperDecorator implements BeerMapper{
             dto.setQuantityOnHand(beer.getBeerInventories()
                     .stream().map(BeerInventory::getQuantityOnHand)
                     .reduce(0, Integer::sum));
+
         }
         return dto;
     }

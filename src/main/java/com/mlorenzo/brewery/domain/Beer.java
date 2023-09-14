@@ -40,17 +40,17 @@ public class Beer extends BaseEntity {
     private Integer quantityToBrew;
     private BigDecimal price;
 
-    @OneToMany(mappedBy = "beer", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "beer", cascade = CascadeType.ALL, orphanRemoval = true)
     @Fetch(FetchMode.JOIN)
     private Set<BeerInventory> beerInventories = new HashSet<>();
     
-    @OneToMany(mappedBy = "beer", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "beer", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<BeerOrderLine> beerOrderLines = new HashSet<>();
     
     @Builder
     public Beer(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String beerName,
                 BeerStyleEnum beerStyle, String upc, Integer minOnHand,
-                Integer quantityToBrew, BigDecimal price) {
+                Integer quantityToBrew, BigDecimal price, Set<BeerInventory> beerInventories) {
         super(id, version, createdDate, lastModifiedDate);
         this.beerName = beerName;
         this.beerStyle = beerStyle;
