@@ -25,44 +25,50 @@ public class SecurityDataLoader implements CommandLineRunner{
 
 	@Override
 	public void run(String... args) throws Exception {
-		loadRolesData();	
 		loadUserData();
 	}
 	
-	private void loadRolesData() {
+	private List<Role> loadRolesData() {
 		if(roleRepository.count() == 0) {
 			// Los roles de Spring Security usan el prefijo "ROLE_"
-			Role adminRole = roleRepository.save(Role.builder().name("ROLE_ADMIN").build());
-			Role customerRole = roleRepository.save(Role.builder().name("ROLE_CUSTOMER").build());
-			Role userRole = roleRepository.save(Role.builder().name("ROLE_USER").build());
-			roleRepository.saveAll(Arrays.asList(adminRole,customerRole,userRole));
+			Role adminRole = Role.builder()
+					.name("ROLE_ADMIN")
+					.build();
+			Role customerRole = Role.builder()
+					.name("ROLE_CUSTOMER")
+					.build();
+			Role userRole = Role.builder()
+					.name("ROLE_USER")
+					.build();
+			return roleRepository.saveAll(Arrays.asList(adminRole,customerRole,userRole));
 		}
+		return roleRepository.findAll();
 	}
 	
 	private void loadUserData() {
 		if(userRepository.count() == 0) {
-			List<Role> roles = roleRepository.findAll();
+			List<Role> roles = loadRolesData();
 			User admin = User.builder()
 						.username("spring")
 						.password(passwordEncoder.encode("admin"))
-						.role(getRole(roles, "ROLE_ADMIN"))
+						.role(findRole(roles, "ROLE_ADMIN"))
 						.build();
 			User user = User.builder()
 					.username("user")
 					.password(passwordEncoder.encode("password"))
-					.role(getRole(roles, "ROLE_USER"))
+					.role(findRole(roles, "ROLE_USER"))
 					.build();
 			User customer = User.builder()
 					.username("scott")
 					.password(passwordEncoder.encode("tiger"))
-					.role(getRole(roles, "ROLE_CUSTOMER"))
+					.role(findRole(roles, "ROLE_CUSTOMER"))
 					.build();
 			userRepository.saveAll(List.of(admin, user, customer));
 			log.debug("Users Loaded: " + userRepository.count());
 		}
 	}
 	
-	private Role getRole(List<Role> roles, String roleName) {
+	private Role findRole(List<Role> roles, String roleName) {
 		return roles.stream()
 				.filter(role -> role.getName().equals(roleName))
 				.findFirst()
