@@ -37,14 +37,6 @@ public class BeerControllerIT {
 	@Autowired
 	MockMvc mockMvc;
 	
-	@Test
-    void initCreationFormTest() throws Exception {
-		mockMvc.perform(get("/beers/new").with(httpBasic("user", "password")))
-        .andExpect(status().isOk())
-        .andExpect(view().name("beers/createOrUpdateBeer"))
-        .andExpect(model().attributeExists("beer"));
-    }
-	
 	@DisplayName("Init New Form")
     @Nested
     class InitNewForm {
