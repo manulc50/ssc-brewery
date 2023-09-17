@@ -4,17 +4,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import com.mlorenzo.brewery.security.RestHeaderAuthFilter;
-import com.mlorenzo.brewery.security.RestUrlAuthFilter;
 import com.mlorenzo.brewery.security.SfgPasswordEncoderFactories;
 
 //securedEnabled = true -> Habilita el uso de la anotación de seguridad @Secured(más antigua y menos potente que las anotaciones de abajo @PreAuthorize y @PostAuthorize)
@@ -57,9 +53,6 @@ public class SecurityConfig {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-			// Registramos nuestros filtros "RestHeaderAuthFilter" y "RestUrlAuthFilter", pasándoles previamente el manejador de autenticaciones, en la cadena de filtros de Spring Security antes del filtro "UsernamePasswordAuthenticationFilter"
-		    //http.addFilterBefore(restHeaderAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
-			//http.addFilterBefore(restUrlAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
 			http.antMatcher("/api/**")
 				.authorizeRequests(authorize -> authorize
 					.antMatchers(HttpMethod.DELETE, "/api/v1/beers/*").hasRole("ADMIN")
@@ -69,24 +62,6 @@ public class SecurityConfig {
 				.and()
 				.csrf().disable()
 				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		}
-		
-		// Método para crear una instancia de nuestro filtro "RestHeaderAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-		private RestHeaderAuthFilter restHeaderAuthFilter(AuthenticationManager authenticationManager) {
-			// Nuestro filtro "RestHeaderAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-			RestHeaderAuthFilter filter = new RestHeaderAuthFilter(new AntPathRequestMatcher("/api/**"));
-			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-			filter.setAuthenticationManager(authenticationManager);
-			return filter;
-		}
-		
-		// Método para crear una instancia de nuestro filtro "RestUrlAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-		private RestUrlAuthFilter restUrlAuthFilter(AuthenticationManager authenticationManager) {
-			// Nuestro filtro "RestUrlAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-			RestUrlAuthFilter filter = new RestUrlAuthFilter(new AntPathRequestMatcher("/api/**"));
-			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-			filter.setAuthenticationManager(authenticationManager);
-			return filter;
 		}
 	}
 	

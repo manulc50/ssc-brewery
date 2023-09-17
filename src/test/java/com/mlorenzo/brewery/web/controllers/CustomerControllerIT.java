@@ -71,14 +71,14 @@ public class CustomerControllerIT {
 
         @ParameterizedTest(name = "#{index} with [{arguments}]")
         @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamNotAdmin")
-        void processCreationFormWithHttpBasicNoRoleAdmin(String user, String pwd) throws Exception {
-            mockMvc.perform(post("/customers").with(httpBasic(user, pwd))
+        void processCreationFormWithHttpBasicNoRoleAdminAndCsrf(String user, String pwd) throws Exception {
+            mockMvc.perform(post("/customers").with(httpBasic(user, pwd)).with(csrf())
                     .param("customerName", "Foo Customer2"))
             	.andExpect(status().isForbidden());
         }
 
         @Test
-        void processCreationFormWithCsrfAndNoCreds() throws Exception {
+        void processCreationFormWithNoCredsAndCsrf() throws Exception {
             mockMvc.perform(post("/customers").with(csrf())
                     .param("customerName", "Foo Customer"))
             	.andExpect(status().isUnauthorized());

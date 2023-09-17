@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Random;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -115,42 +114,6 @@ public class BeerRestControllerIT {
             mockMvc.perform(delete("/api/v1/beers/" + beerToDelete().getId())
             		.with(httpBasic("spring", "admin")))
             	.andExpect(status().isNoContent());
-        }
-        
-        // Activar cuando se aplique el filtro personalizado "RestHeaderAuthFilter" en Spring Security
-        @Disabled
-        @Test
-        void deleteBeerWithHeaderCreds() throws Exception {
-            mockMvc.perform(delete("/api/v1/beers/" + beerToDelete().getId())
-            		.header("Api-Key", "spring").header("Api-Secret", "admin"))
-            	.andExpect(status().isNoContent());
-        }
-        
-        // Activar cuando se aplique el filtro personalizado "RestHeaderAuthFilter" en Spring Security
-        @Disabled
-        @Test
-        void deleteBeerWithHeaderBadCreds() throws Exception {
-            mockMvc.perform(delete("/api/v1/beers/97df0c39-90c4-4ae0-b663-453e8e19c311")
-            		.header("Api-Key", "spring").header("Api-Secret", "adminXXXX"))
-            	.andExpect(status().isUnauthorized());
-        }
-        
-        // Activar cuando se aplique el filtro personalizado "RestUrlAuthFilter" en Spring Security
-        @Disabled
-        @Test
-        void deleteBeerWithUrlCreds() throws Exception {
-            mockMvc.perform(delete("/api/v1/beers/" + beerToDelete().getId())
-            		.param("apiKey", "scott").param("apiSecret", "tiger"))
-            	.andExpect(status().isNoContent());
-        }
-
-        // Activar cuando se aplique el filtro personalizado "RestUrlAuthFilter" en Spring Security
-        @Disabled
-        @Test
-        void deleteBeerWithUrlBadCreds() throws Exception {
-            mockMvc.perform(delete("/api/v1/beers/97df0c39-90c4-4ae0-b663-453e8e19c311")
-            		.header("apiKey", "scottXXXX").header("apiSecret", "tiger"))
-            	.andExpect(status().isUnauthorized());
         }
         
         Beer beerToDelete() {
