@@ -37,22 +37,12 @@ public class BeerControllerIT {
 	@Autowired
 	MockMvc mockMvc;
 	
-	@Test
-    void initCreationFormTest() throws Exception {
-		mockMvc.perform(get("/beers/new").with(httpBasic("user", "password")))
-        .andExpect(status().isOk())
-        .andExpect(view().name("beers/createOrUpdateBeer"))
-        .andExpect(model().attributeExists("beer"));
-    }
-	
 	@DisplayName("Init New Form")
     @Nested
     class InitNewForm {
 		
-		@ParameterizedTest(name = "#{index} with [{arguments}]")
-        @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamAllUsers")
-        void initCreationFormWithHttpBasic(String user, String pwd) throws Exception {
-            mockMvc.perform(get("/beers/new").with(httpBasic(user, pwd)))
+        void initCreationFormWithHttpBasic() throws Exception {
+            mockMvc.perform(get("/beers/new").with(httpBasic("spring", "admin")))
                     .andExpect(status().isOk())
                     .andExpect(view().name("beers/createOrUpdateBeer"))
                     .andExpect(model().attributeExists("beer"));
@@ -144,14 +134,14 @@ public class BeerControllerIT {
 
         @ParameterizedTest(name = "#{index} with [{arguments}]")
         @MethodSource("com.mlorenzo.brewery.web.controllers.BeerControllerIT#getStreamNotAdmin")
-        void processCreationFormWithHttpBasicNoRoleAdmin(String user, String pwd) throws Exception {
-            mockMvc.perform(post("/beers").with(httpBasic(user, pwd))
+        void processCreationFormWithHttpBasicNoRoleAdminAndCsrf(String user, String pwd) throws Exception {
+            mockMvc.perform(post("/beers").with(httpBasic(user, pwd)).with(csrf())
                     .param("beerName", "Foo Beer"))
             	.andExpect(status().isForbidden());
         }
 
         @Test
-        void processCreationFormWithCsrfAndNoCreds() throws Exception {
+        void processCreationFormWithNoCredsAndCsrf() throws Exception {
             mockMvc.perform(post("/beers").with(csrf())
                     .param("beerName", "Foo Beer"))
             	.andExpect(status().isUnauthorized());

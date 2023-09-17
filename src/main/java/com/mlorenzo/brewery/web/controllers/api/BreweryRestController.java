@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.mlorenzo.brewery.domain.Brewery;
+import com.mlorenzo.brewery.security.annotations.BreweryReadPermission;
 import com.mlorenzo.brewery.services.BreweryService;
 
 import lombok.AllArgsConstructor;
@@ -18,6 +19,8 @@ import lombok.AllArgsConstructor;
 public class BreweryRestController {
 	private final BreweryService breweryService;
 
+	// Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BreweryReadPermission
 	@GetMapping
 	@ResponseBody
     public List<Brewery> getBreweriesJson(){

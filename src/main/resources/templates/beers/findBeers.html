@@ -1,4 +1,5 @@
 <html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{fragments/layout :: layout (~{::body},'beers')}">
 <body>
 <h2>Find Beers</h2>
@@ -24,6 +25,7 @@
     </div>
 </form>
 <br />
-<a class="btn btn-default" th:href="@{/beers/new}">Add Beer</a>
+<!-- Mostramos el botón para añadir una nueva cerveza sólo si el usuario autenticado en la aplicación tiene el permiso "beer.create" -->
+<a sec:authorize="hasAuthority('beer.create')" class="btn btn-default" th:href="@{/beers/new}">Add Beer</a>
 </body>
 </html>

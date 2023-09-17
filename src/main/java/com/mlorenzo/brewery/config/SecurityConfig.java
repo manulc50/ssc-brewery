@@ -4,25 +4,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import com.mlorenzo.brewery.security.RestHeaderAuthFilter;
-import com.mlorenzo.brewery.security.RestUrlAuthFilter;
 import com.mlorenzo.brewery.security.SfgPasswordEncoderFactories;
+
+import lombok.RequiredArgsConstructor;
 
 //securedEnabled = true -> Habilita el uso de la anotación de seguridad @Secured(más antigua y menos potente que las anotaciones de abajo @PreAuthorize y @PostAuthorize)
 //prePostEnabled = true -> Habilita el uso de las anotaciones de seguridad @PreAuthorize y @PostAuthorize
-@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 @Configuration
 public class SecurityConfig {
-	
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		//return NoOpPasswordEncoder.getInstance();
@@ -40,9 +40,7 @@ public class SecurityConfig {
 	// Se comenta porque en nuestro caso es opcional, es decir, si sólo tenemos una única implementación de la interfaz "UserDetailsService" de Spring Security, no es necesario
 	// indicarla en el método de configuración "configure". Sin embargo, si tenemos más de una implementación, entonces sí es necesario indicar la implementación
 	// que queremos utilizar
-	/*@Autowired
-	UserDetailsService jpaUserDetailsService;
-	
+	/*
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(jpaUserDetailsService).passwordEncoder(passwordEncoder());
@@ -57,43 +55,23 @@ public class SecurityConfig {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-			// Registramos nuestros filtros "RestHeaderAuthFilter" y "RestUrlAuthFilter", pasándoles previamente el manejador de autenticaciones, en la cadena de filtros de Spring Security antes del filtro "UsernamePasswordAuthenticationFilter"
-		    //http.addFilterBefore(restHeaderAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
-			//http.addFilterBefore(restUrlAuthFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
 			http.antMatcher("/api/**")
-				.authorizeRequests(authorize -> authorize
-					.antMatchers(HttpMethod.DELETE, "/api/v1/beers/*").hasRole("ADMIN")
-					.antMatchers("/api/v1/breweries").hasAnyRole("CUSTOMER", "ADMIN")
-					.anyRequest().authenticated())
+				// Opcional porque, por defecto, todas las rutas de la aplicación están protegidas y requiren autenticación
+				.authorizeRequests(authorize -> authorize.anyRequest().authenticated())
 				.httpBasic()
 				.and()
 				.csrf().disable()
 				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		}
-		
-		// Método para crear una instancia de nuestro filtro "RestHeaderAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-		private RestHeaderAuthFilter restHeaderAuthFilter(AuthenticationManager authenticationManager) {
-			// Nuestro filtro "RestHeaderAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-			RestHeaderAuthFilter filter = new RestHeaderAuthFilter(new AntPathRequestMatcher("/api/**"));
-			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-			filter.setAuthenticationManager(authenticationManager);
-			return filter;
-		}
-		
-		// Método para crear una instancia de nuestro filtro "RestUrlAuthFilter" y así poder registrarlo en la cadena de filtros de Spring Security
-		private RestUrlAuthFilter restUrlAuthFilter(AuthenticationManager authenticationManager) {
-			// Nuestro filtro "RestUrlAuthFilter" se aplicará a todos las rutas que coincidan con la expresión "/api/**". Son las rutas de nuestra API REST
-			RestUrlAuthFilter filter = new RestUrlAuthFilter(new AntPathRequestMatcher("/api/**"));
-			// Establecemos el manejador de autenticaciones, que se pasa como parámetro de entrada a este método, en nuestro filtro
-			filter.setAuthenticationManager(authenticationManager);
-			return filter;
-		}
+
 	}
 	
 	@Order(2)
+	@RequiredArgsConstructor
 	// Esta anotación ya incluye la anotación @Configuration
 	@EnableWebSecurity
 	static class MvcSecurity extends WebSecurityConfigurerAdapter {
+		private final UserDetailsService userDetailsService;
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
@@ -101,9 +79,20 @@ public class SecurityConfig {
 					// No usar en Producción porque se trata de una base de datos apta únicamente para Desarrollo
 					.antMatchers("/h2-console/**").permitAll()
 					.antMatchers("/", "/webjars/**", "/resources/**").permitAll()
-					.antMatchers("/breweries/**", "/breweries*").hasAnyRole("CUSTOMER", "ADMIN")
+					// Opcional porque el resto de rutas de la aplicación están protegidas por defecto y requiren autenticación
 					.anyRequest().authenticated()
-				.and().formLogin()
+				.and().formLogin(loginConfigurer -> loginConfigurer
+						.loginProcessingUrl("/login")
+						.loginPage("/")
+						.defaultSuccessUrl("/")
+						// Pasamos el parámetro "error" a la url "/" en caso de fallar el proceso de login
+						.failureUrl("/?error"))
+				.logout(logoutConfigurer -> logoutConfigurer
+						.logoutRequestMatcher(new AntPathRequestMatcher("/logout", HttpMethod.GET.name()))
+						// Pasamos el parámetro "logout" a la url "/" en caso de ser exitoso el proceso de logout
+						.logoutSuccessUrl("/?logout"))
+				// Configura Simple Hash-Based Token Remember Me
+				.rememberMe().userDetailsService(userDetailsService)
 				.and().httpBasic()
 				// Para no aplicar protección CSRF a las rutas, o endpoints, correspondientes a la consola H2
 				.and().csrf().ignoringAntMatchers("/h2-console/**");

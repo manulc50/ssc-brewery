@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.mlorenzo.brewery.security.annotations.BeerCreatePermission;
+import com.mlorenzo.brewery.security.annotations.BeerDeletePermission;
+import com.mlorenzo.brewery.security.annotations.BeerReadPermission;
+import com.mlorenzo.brewery.security.annotations.BeerUpdatePermission;
 import com.mlorenzo.brewery.services.BeerService;
 import com.mlorenzo.brewery.web.models.BeerDto;
 import com.mlorenzo.brewery.web.models.BeerPagedList;
@@ -29,6 +33,8 @@ public class BeerRestController {
 
     private final BeerService beerService;
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerReadPermission
     @GetMapping(produces = { "application/json" })
     public ResponseEntity<BeerPagedList> listBeers(@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
                                                    @RequestParam(value = "pageSize", required = false) Integer pageSize,
@@ -46,6 +52,8 @@ public class BeerRestController {
         return new ResponseEntity<>(beerList, HttpStatus.OK);
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize("hasAuthority('beer.read')")
+    @BeerReadPermission
     @GetMapping(path = {"/{beerId}"}, produces = { "application/json" })
     public ResponseEntity<BeerDto> getBeerById(@PathVariable("beerId") UUID beerId,
                                                @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand){
@@ -55,11 +63,15 @@ public class BeerRestController {
         return new ResponseEntity<>(beerService.findBeerById(beerId, showInventoryOnHand), HttpStatus.OK);
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerReadPermission
     @GetMapping(path = {"upc/{upc}"}, produces = { "application/json" })
     public ResponseEntity<BeerDto> getBeerByUpc(@PathVariable("upc") String upc){
         return new ResponseEntity<>(beerService.findBeerByUpc(upc), HttpStatus.OK);
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerCreatePermission
     @PostMapping
     public ResponseEntity<Void> saveNewBeer(@Valid @RequestBody BeerDto beerDto){
         BeerDto savedDto = beerService.saveBeer(beerDto);
@@ -69,12 +81,16 @@ public class BeerRestController {
         return new ResponseEntity<>(httpHeaders, HttpStatus.CREATED);
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerUpdatePermission
     @PutMapping(path = {"/{beerId}"}, produces = { "application/json" })
     public ResponseEntity<Void> updateBeer(@PathVariable("beerId") UUID beerId, @Valid @RequestBody BeerDto beerDto){
         beerService.updateBeer(beerId, beerDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerDeletePermission
     @DeleteMapping({"/{beerId}"})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBeer(@PathVariable("beerId") UUID beerId){

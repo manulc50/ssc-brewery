@@ -1,8 +1,10 @@
 package com.mlorenzo.brewery.bootstrap;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,28 +13,32 @@ import com.mlorenzo.brewery.repositories.*;
 import com.mlorenzo.brewery.web.models.BeerStyleEnum;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
+// Esta clase debe ejecutarse después de la clase "SecurityBreweryLoader" porque necesita de ella la inserción
+// de los customers en la base de datos
+@Order(2)
 @Component
-public class DefaultBreweryLoader {
-    public static final String TASTING_ROOM = "Tasting Room";
-    public static final String BEER_1_UPC = "0631234200036";
-    public static final String BEER_2_UPC = "0631234300019";
-    public static final String BEER_3_UPC = "0083783375213";
-
+public class DefaultBreweryLoader implements CommandLineRunner {
+	private static final String BEER_1_UPC = "0631234200036";
+    private static final String BEER_2_UPC = "0631234300019";
+    private static final String BEER_3_UPC = "0083783375213";
+    
     private final BreweryRepository breweryRepository;
     private final BeerRepository beerRepository;
     private final BeerInventoryRepository beerInventoryRepository;
-    private final BeerOrderRepository beerOrderRepository;
     private final CustomerRepository customerRepository;
+    private final BeerOrderRepository beerOrderRepository;
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void init() {
+    @Override
+	public void run(String... args) throws Exception {
         loadBreweryData();
         loadBeerData();
-        loadCustomerData();
+        loadBeerOrderData();
     }
     
     private void loadBreweryData() {
@@ -89,28 +95,29 @@ public class DefaultBreweryLoader {
     	}
     }
 
-    @Transactional
-    private void loadCustomerData() {
-    	if(customerRepository.count() == 0) {
-	        Customer tastingRoom = Customer.builder()
-	                .customerName(TASTING_ROOM)
-	                .apiKey(UUID.randomUUID())
-	                .build();
-	        Customer savedCustomer = customerRepository.save(tastingRoom);
-	        beerRepository.findAll().forEach(beer -> {
-	        	BeerOrder beerOrder = BeerOrder.builder()
-	                    .customer(savedCustomer)
-	                    .orderStatus(OrderStatusEnum.NEW)
-	                    .build();
-	        	Set<BeerOrderLine> beerOrderLines = Set.of(BeerOrderLine.builder()
-	        			.beer(beer)
-	        			.beerOrder(beerOrder)
-	                    .orderQuantity(2)
-	                    .quantityAllocated(7)
-	                    .build());
-	        	beerOrder.setBeerOrderLines(beerOrderLines);
-	        	beerOrderRepository.save(beerOrder);
-	        });
+    private void loadBeerOrderData() {
+    	if(beerOrderRepository.count() == 0) {
+    		List<Customer> customers = customerRepository.findAll();
+    		List<BeerOrder> beerOrders = customers.stream()
+    				// Versión simplificada de la expresión "customer -> createOrder(customer)"
+    				.map(this::createOrder)
+    				.collect(Collectors.toList());
+    		beerOrderRepository.saveAll(beerOrders);
+    		log.debug("Orders Loaded: " + beerOrderRepository.count());
     	}
+    }
+    
+    private BeerOrder createOrder(Customer customer) {
+    	BeerOrder beerOrder = BeerOrder.builder()
+    		.customer(customer)
+    		.orderStatus(OrderStatusEnum.NEW)
+        	.build();
+    	Set<BeerOrderLine> beerOrderLines = Set.of(BeerOrderLine.builder()
+    			.beer(beerRepository.findByUpc(BEER_1_UPC).orElseThrow())
+                .orderQuantity(2)
+                .beerOrder(beerOrder)
+                .build());
+    	beerOrder.setBeerOrderLines(beerOrderLines);
+        return beerOrder;
     }
 }

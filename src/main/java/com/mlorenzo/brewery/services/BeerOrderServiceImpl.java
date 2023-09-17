@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.mlorenzo.brewery.domain.BeerOrder;
 import com.mlorenzo.brewery.domain.Customer;
@@ -43,6 +45,15 @@ public class BeerOrderServiceImpl implements BeerOrderService {
         else 
             return null;
     }
+    
+	@Override
+	public BeerOrderPagedList listOrders(Pageable pageable) {
+		Page<BeerOrder> beerOrderPage = beerOrderRepository.findAll(pageable);
+    	return new BeerOrderPagedList(beerOrderPage.stream()
+                .map(beerOrderMapper::beerOrderToDto)
+                .collect(Collectors.toList()), PageRequest.of(beerOrderPage.getPageable().getPageNumber(),
+                		beerOrderPage.getPageable().getPageSize()), beerOrderPage.getTotalElements());
+	}
 
     @Transactional
     @Override
@@ -66,6 +77,22 @@ public class BeerOrderServiceImpl implements BeerOrderService {
     public BeerOrderDto getOrderById(UUID customerId, UUID orderId) {
         return beerOrderMapper.beerOrderToDto(getOrder(customerId, orderId));
     }
+    
+	@Override
+	public BeerOrderDto getOrderByIdSecure(UUID orderId) {
+		return beerOrderRepository.findByIdSecure(orderId)
+				// Versión simplificada de la expresión "beerOrder -> beerOrderMapper.beerOrderToDto(beerOrder)"
+				.map(beerOrderMapper::beerOrderToDto)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+	}
+	
+	@Override
+	public BeerOrderDto getOrderById(UUID orderId) {
+		return beerOrderRepository.findById(orderId)
+				// Versión simplificada de la expresión "beerOrder -> beerOrderMapper.beerOrderToDto(beerOrder)"
+				.map(beerOrderMapper::beerOrderToDto)
+				.orElseThrow();
+	}
 
     @Override
     public void pickupOrder(UUID customerId, UUID orderId) {
@@ -88,4 +115,5 @@ public class BeerOrderServiceImpl implements BeerOrderService {
         }
         throw new RuntimeException("Customer Not Found");
     }
+
 }

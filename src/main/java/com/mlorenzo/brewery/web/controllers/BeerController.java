@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,6 +17,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.mlorenzo.brewery.domain.Beer;
 import com.mlorenzo.brewery.repositories.BeerRepository;
+import com.mlorenzo.brewery.security.annotations.BeerCreatePermission;
+import com.mlorenzo.brewery.security.annotations.BeerReadPermission;
+import com.mlorenzo.brewery.security.annotations.BeerUpdatePermission;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -31,12 +33,16 @@ import java.util.UUID;
 public class BeerController {
     private final BeerRepository beerRepository;
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerReadPermission
     @RequestMapping("/find")
     public String findBeers(Model model) {
         model.addAttribute("beer", Beer.builder().build());
         return "beers/findBeers";
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerReadPermission
     @GetMapping
     public String processFindFormReturnMany(Beer beer, BindingResult result, Model model) {
         // find beers by name
@@ -61,6 +67,8 @@ public class BeerController {
         }
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerReadPermission
     @GetMapping("/{beerId}")
     public ModelAndView showBeer(@PathVariable UUID beerId) {
         ModelAndView mav = new ModelAndView("beers/beerDetails");
@@ -69,12 +77,16 @@ public class BeerController {
         return mav;
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerCreatePermission
     @GetMapping("/new")
     public String initCreationForm(Model model) {
         model.addAttribute("beer", Beer.builder().build());
         return "beers/createOrUpdateBeer";
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @BeerUpdatePermission
     @GetMapping("/{beerId}/edit")
     public String initUpdateBeerForm(@PathVariable UUID beerId, Model model) {
     	Optional<Beer> optionalBeer = beerRepository.findById(beerId);
@@ -83,7 +95,9 @@ public class BeerController {
         return "beers/createOrUpdateBeer";
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    // Anotaciones personalizadas que contienen la anotación de Spring Security @PreAuthorize
+    @BeerCreatePermission
+    @BeerUpdatePermission
     @PostMapping
     public String processCreationOrUpdationForm(@Valid Beer beer, BindingResult result, SessionStatus sessionStatus) {
         if (result.hasErrors())

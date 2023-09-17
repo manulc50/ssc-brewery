@@ -2,8 +2,6 @@ package com.mlorenzo.brewery.web.controllers;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,12 +15,14 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.mlorenzo.brewery.domain.Customer;
 import com.mlorenzo.brewery.repositories.CustomerRepository;
+import com.mlorenzo.brewery.security.annotations.CustomerCreatePermission;
+import com.mlorenzo.brewery.security.annotations.CustomerReadPermission;
+import com.mlorenzo.brewery.security.annotations.CustomerUpdatePermission;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 
 @RequiredArgsConstructor
 @SessionAttributes("customer")
@@ -32,14 +32,16 @@ public class CustomerController {
     //ToDO: Add service
     private final CustomerRepository customerRepository;
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @CustomerReadPermission
     @RequestMapping("/find")
     public String findCustomers(Model model){
         model.addAttribute("customer", Customer.builder().build());
         return "customers/findCustomers";
     }
 
-    // Esta anotación es más antigua que las anotaciones de seguridad @PreAuthorize y @PostAuthorize y tiene menos funcionalidades que éstas
-    @Secured({"ROLE_ADMIN", "ROLE_CUSTOMER"})
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @CustomerReadPermission
     @GetMapping
     public String processFindFormReturnMany(Customer customer, BindingResult result, Model model){
         // find customers by name
@@ -62,6 +64,8 @@ public class CustomerController {
         }
     }
     
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @CustomerReadPermission
     @GetMapping("/{customerId}")
     public ModelAndView showCustomer(@PathVariable UUID customerId) {
         ModelAndView mav = new ModelAndView("customers/customerDetails");
@@ -70,12 +74,16 @@ public class CustomerController {
         return mav;
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @CustomerCreatePermission
     @GetMapping("/new")
     public String initCreationForm(Model model) {
         model.addAttribute("customer", Customer.builder().apiKey(UUID.randomUUID()).build());
         return "customers/createOrUpdateCustomer";
     }
 
+    // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
+    @CustomerUpdatePermission
     @GetMapping("/{customerId}/edit")
     public String initUpdateCustomerForm(@PathVariable UUID customerId, Model model) {
     	Optional<Customer> optionalCustomer = customerRepository.findById(customerId);
@@ -84,7 +92,9 @@ public class CustomerController {
        return "customers/createOrUpdateCustomer";
    }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    // Anotaciones personalizadas que contienen la anotación de Spring Security @PreAuthorize
+    @CustomerCreatePermission
+    @CustomerUpdatePermission
     @PostMapping
     public String processCreationOrUpdationForm(@Valid Customer customer, BindingResult result, SessionStatus sessionStatus) {
     	if (result.hasErrors()) 
