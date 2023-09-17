@@ -11,9 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import com.mlorenzo.brewery.security.RestHeaderAuthFilter;
-import com.mlorenzo.brewery.security.RestUrlAuthFilter;
 import com.mlorenzo.brewery.security.SfgPasswordEncoderFactories;
+import com.mlorenzo.brewery.security.filters.RestHeaderAuthFilter;
+import com.mlorenzo.brewery.security.filters.RestUrlAuthFilter;
 
 // Esta anotación ya incluye la anotación @Configuration
 @EnableWebSecurity

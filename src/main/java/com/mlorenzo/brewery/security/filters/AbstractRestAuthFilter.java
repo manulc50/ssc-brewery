@@ -1,4 +1,4 @@
-package com.mlorenzo.brewery.security;
+package com.mlorenzo.brewery.security.filters;
 
 import java.io.IOException;
 

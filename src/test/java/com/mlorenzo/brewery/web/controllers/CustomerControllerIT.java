@@ -26,27 +26,24 @@ public class CustomerControllerIT {
 	CustomerRepository customerRepository;
 	
 	@Test
-    void processCreationForm() throws Exception {
+    void processCreationFormWithHttpBasicAndCsrf() throws Exception {
 		when(customerRepository.save(any(Customer.class))).thenReturn(Customer.builder().build());
-        mockMvc.perform(post("/customers")
-        		.param("customerName", "Foo Customer")
-        		.with(httpBasic("spring", "admin"))
-        		.with(csrf()))
+        mockMvc.perform(post("/customers").with(httpBasic("spring", "admin")).with(csrf())
+        		.param("customerName", "Foo Customer"))
         	.andExpect(status().is3xxRedirection());
     }
 	
 	@Test
-    void processCreationFormWithNoAuth() throws Exception {
+    void processCreationFormWithNoCredsAndCsrf() throws Exception {
         mockMvc.perform(post("/customers/new").with(csrf())
                 .param("customerName", "Foo Customer"))
         	.andExpect(status().isUnauthorized());
     }
 	
 	@Test
-    void processCreationFormWithNoCsrf() throws Exception {
-        mockMvc.perform(post("/customers/new")
-                .param("customerName", "Foo Customer")
-        		.with(httpBasic("user", "password")))
+    void processCreationFormWithHttpBasicAndNoCsrf() throws Exception {
+        mockMvc.perform(post("/customers/new").with(httpBasic("user", "password"))
+                .param("customerName", "Foo Customer"))
         .andExpect(status().isForbidden());
     }
 
