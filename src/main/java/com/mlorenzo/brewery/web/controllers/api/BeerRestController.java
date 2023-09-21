@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// También podemos configurar CORS para todas las rutas de un controlado poniendo esta anotación a nivel de clase.
+// En este caso, configuramos CORS en todas las rutas de este controlador usando los valores por defecto.
+@CrossOrigin
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/beers")
@@ -89,6 +92,9 @@ public class BeerRestController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    // Podemos configurar CORS para una determiada ruta del controlado poniendo esta anotación a nivel de método.
+    // En este caso, configuramos CORS en esta ruta con los valores por defecto.
+    //@CrossOrigin
     // Anotación personalizada que contiene la anotación de Spring Security @PreAuthorize
     @BeerDeletePermission
     @DeleteMapping({"/{beerId}"})

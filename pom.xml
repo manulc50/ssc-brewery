@@ -112,6 +112,11 @@
             <version>${webjars-bootstrap.version}</version>
         </dependency>
         <!-- end of webjars -->
+        <dependency>
+        	<groupId>com.warrenstrange</groupId>
+        	<artifactId>googleauth</artifactId>
+        	<version>1.5.0</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -10,14 +10,15 @@
 <h2 th:text="#{welcomemsg}">SFG Brewery Monolith</h2>
 <div sec:authorize="!isAuthenticated()" class="row" style="margin-bottom: 15px">
 	<div class="col-md-12">
-		<!-- Si en la url existe el parámetro "error", mostramos este div -->
-		<div th:if="${param.error}" class="alert alert-danger">
-			Invalid Username or Password
-		</div>
 		<!-- Si en la url existe el parámetro "logout", mostramos este div -->
 		<div th:if="${param.logout}" class="alert alert-success">
 			You Have Logged out
 		</div>
+		<!-- Mensaje de error en caso de credenciales inválidas o cuenta bloqueada -->
+		<!-- Cuando el proceso de login es erróneo, Spring Segurity lanza una excepción de tipo "AuthenticationException" que es manejada por la clase de Spring Security
+		     "SimpleUrlAuthenticationFailureHandler" creando el atributo "SPRING_SECURITY_LAST_EXCEPTION" en la sesión con el mensaje de esa excepción -->
+		<div th:if="${session['SPRING_SECURITY_LAST_EXCEPTION']} != null" th:text="${session['SPRING_SECURITY_LAST_EXCEPTION'].message}"
+        	class="alert alert-danger">Error message...</div>
 		<form  th:action="@{/login}" method="post">
 			<label for="username">Username:</label>
 			<!-- El atributo "autocomplete" puesto a "off" desactiva el autocompletado que proporcionan los navegadores -->
